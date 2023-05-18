@@ -19,4 +19,3 @@ print("Tasks    :        :", ctx.num_tasks)
 
 print("Proc  id :        :", ctx.proc_id)
 print("Nproc    :        :", ctx.num_procs)
-

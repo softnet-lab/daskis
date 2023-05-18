@@ -32,5 +32,5 @@ def test_pycommand():
     import subprocess as sp
     import os
 
-    assert os.getcwd()=='/storage/tuclocal/vsam/git/daskis'
+    assert os.getcwd() == '/storage/tuclocal/vsam/git/daskis'
     sp.call(['python', "tests/hello_slurm.py"])

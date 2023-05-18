@@ -24,7 +24,7 @@ __slurm_env_map = {
     'SLURM_JOB_NUM_NODES': 'job_num_nodes',
     'SLURM_JOB_NODELIST': 'nodelist',
     # SLURM_NODE_ALIASES=(null)
-    'SLURM_JOB_PARTITION': 'job_partition', # queue name (aTUc, compute, gpu etc)
+    'SLURM_JOB_PARTITION': 'partition',  # queue name (aTUc, compute, gpu etc)
 
     # actual allocation
     'SLURM_NNODES': 'num_nodes',
@@ -40,7 +40,7 @@ __slurm_env_map = {
     'SLURM_PROCID': 'proc_id',  # MPI rank
 
     # topology
-    'SLURM_TOPOLOGY_ADDR': 'topology_addr', 
+    'SLURM_TOPOLOGY_ADDR': 'topology_addr',
     'SLURM_TOPOLOGY_ADDR_PATTERN': 'topology_addr_pattern',
 
 
@@ -69,13 +69,39 @@ class Context:
         """Returns True if running under SLURM, else returns false"""
         return 'SLURM_JOB_ID' in self.environ
 
-    def __cached(self, name, env_name, convert=None):
+    def __cached(self, name, env_name):
         try:
             return getattr(self, name)
         except AttributeError:
             v = self.environ[env_name]
-            if convert:
-                v = convert(v)
+            setattr(self, name, v)
+            return v
+
+    def __cached_convert(self, name, env_name, convert):
+        try:
+            return getattr(self, name)
+        except AttributeError:
+            v = self.environ[env_name]
+            v = convert(v)
+            setattr(self, name, v)
+            return v
+
+    def __cached_opt(self, name, env_name, default_val=None):
+        try:
+            return getattr(self, name)
+        except AttributeError:
+            v = self.environ.get(env_name, default_val)
+            setattr(self, name, v)
+            return v
+
+    def __cached_opt_convert(self, name, env_name, convert, default_val=None):
+        try:
+            return getattr(self, name)
+        except AttributeError:
+            if env_name in self.environ:
+                v = convert(self.environ[env_name])
+            else:
+                v = default_val
             setattr(self, name, v)
             return v
 
@@ -106,7 +132,7 @@ class Context:
     @property
     def node_id(self):
         return self.__cached('_cached_node_id', 'SLURM_NODEID')
-    
+
     @property
     def node_name(self):
         return self.__cached('_cached_node_name', 'SLURMD_NODENAME')
@@ -131,3 +157,10 @@ class Context:
     def num_procs(self):
         return self.__cached('_cached_num_procs', 'SLURM_NPROCS')
 
+    @property
+    def partition(self):
+        return self.__cached('_cached_partition', 'SLURM_JOB_PARTITION')
+
+    @property
+    def account(self):
+        return self.__cached_opt('_cached_partition', 'SLURM_JOB_PARTITION')
